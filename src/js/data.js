@@ -176,6 +176,7 @@ const defaultData = {
 
 // Load or Initialize Store
 function getStore() {
+  if (typeof localStorage === 'undefined') return defaultData;
   const saved = localStorage.getItem(STORAGE_KEY);
   if (saved) {
     try { 
@@ -189,7 +190,9 @@ function getStore() {
 }
 
 export function saveStore(data) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  if (typeof localStorage !== 'undefined') {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  }
 }
 
 export const store = getStore();
@@ -240,26 +243,13 @@ export async function loadSupabaseData() {
 export function loginUser(role, name, email) {
   store.auth.isLoggedIn = true;
   store.auth.role = role;
-  
-  if (role === 'employee') {
-    const matchedEmp = store.employees.find(e => e.email.toLowerCase() === (email || '').toLowerCase() || e.name === name) || store.employees[0];
-    store.auth.user = {
-      id: matchedEmp?.id || 'EMP001',
-      name: matchedEmp?.name || name || 'Aarav Mehta',
-      email: matchedEmp?.email || email || 'aarav.mehta@enterprise.ai',
-      role: matchedEmp?.role || 'Python Developer',
-      department: matchedEmp?.department || 'Software Development'
-    };
-  } else {
-    store.auth.user = {
-      id: 'HR-101',
-      name: name || 'HR Administrator',
-      email: email || 'hr@enterprise.ai',
-      role: 'HR Director',
-      department: 'Human Resources'
-    };
-  }
-
+  store.auth.user = {
+    id: role === 'employee' ? 'EMP001' : 'HR-101',
+    name: name || (role === 'employee' ? 'Alex Mercer' : 'HR Administrator'),
+    email: email || (role === 'employee' ? 'alex.mercer@enterprise.ai' : 'hr@enterprise.ai'),
+    role: role === 'employee' ? 'Principal Analyst' : 'HR Director',
+    department: role === 'employee' ? 'People Analytics' : 'Human Resources'
+  };
   saveStore(store);
 }
 
