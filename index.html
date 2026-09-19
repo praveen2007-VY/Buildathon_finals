@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-[#F9FAF7]">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>TalentPulse AI Enterprise Platform - Intelligence OS v2.8</title>
+
+  <!-- Google Fonts & Icons -->
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+
+  <!-- Tailwind CSS CDN Configured with Stitch Tokens -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            'surface': '#F9FAF7',
+            'surface-dim': '#D9DAD8',
+            'surface-bright': '#F9FAF7',
+            'surface-container-lowest': '#FFFFFF',
+            'surface-container-low': '#F3F4F1',
+            'surface-container': '#EDEEEB',
+            'surface-container-high': '#E7E8E6',
+            'surface-container-highest': '#E2E3E0',
+            'on-surface': '#191C1B',
+            'on-surface-variant': '#3D4A40',
+            'inverse-surface': '#2E312F',
+            'inverse-on-surface': '#F0F1EE',
+            'outline': '#6D7A6F',
+            'outline-variant': '#BCCABD',
+            'primary': '#006D3F',
+            'on-primary': '#FFFFFF',
+            'primary-container': '#16A765',
+            'on-primary-container': '#00331A',
+            'primary-fixed': '#7DFBB0',
+            'primary-fixed-dim': '#5FDE96',
+            'on-primary-fixed': '#00210F',
+            'secondary': '#4648D4',
+            'on-secondary': '#FFFFFF',
+            'secondary-container': '#6063EE',
+            'secondary-fixed': '#E1E0FF',
+            'secondary-fixed-dim': '#C0C1FF',
+            'on-secondary-fixed': '#07006C',
+            'tertiary': '#4E635A',
+            'tertiary-container': '#81978D',
+            'tertiary-fixed': '#D1E8DC',
+            'tertiary-fixed-dim': '#B5CCC1',
+            'error': '#BA1A1A',
+            'error-container': '#FFDAD6',
+            'on-error-container': '#93000A',
+            'brand-emerald': '#0E201A',
+            'brand-emerald-hover': '#163026'
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            display: ['Plus Jakarta Sans', 'sans-serif']
+          }
+        }
+      }
+    };
+  </script>
+
+  <!-- Custom Styles -->
+  <link rel="stylesheet" href="/src/css/style.css"/>
+</head>
+<body class="h-full bg-surface text-on-surface font-sans antialiased overflow-x-hidden">
+  <div id="app" class="min-h-screen flex flex-col">
+    <!-- Rendered dynamically by app.js -->
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div id="toastContainer" class="fixed bottom-5 right-5 z-[100] flex flex-col gap-2 pointer-events-none"></div>
+
+  <!-- Global Modals Container -->
+  <div id="modalContainer"></div>
+
+  <script type="module" src="/src/js/app.js"></script>
+</body>
+</html>

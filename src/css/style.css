@@ -1,0 +1,110 @@
+/* Custom styling and animation enhancements for TalentPulse AI Enterprise Platform */
+
+@layer base {
+  html, body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Inter', sans-serif;
+  }
+}
+
+/* Custom scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(109, 122, 111, 0.25);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(109, 122, 111, 0.45);
+}
+
+/* Custom Glassmorphism and Backdrop Blur Effects */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.dark-glass-panel {
+  background: rgba(14, 32, 26, 0.95);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+/* Animation Keyframes */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes pulseGlow {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(22, 167, 101, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(22, 167, 101, 0);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-slide-right {
+  animation: slideInRight 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.pulse-glow {
+  animation: pulseGlow 2s infinite;
+}
+
+/* Tabular Number Alignment */
+.num-tnum {
+  font-feature-settings: "tnum" 1;
+}
+
+/* Material Symbols Outlined Fix */
+.material-symbols-outlined {
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  user-select: none;
+}
+
+.material-symbols-outlined.filled {
+  font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
+
+/* Custom Card Hover Elevations */
+.elevated-card {
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 1px 3px rgba(14, 34, 27, 0.04), 0 6px 16px rgba(14, 34, 27, 0.03);
+  border: 1px solid #E5E9E2;
+}
+
+.elevated-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 6px rgba(14, 34, 27, 0.05), 0 12px 24px rgba(14, 34, 27, 0.07);
+  border-color: #D1D8CD;
+}
