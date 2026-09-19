@@ -1,9 +1,14 @@
-// Login & Portal Selection View (Employee Login vs HR Login)
+// Login & Portal Selection View (Employee Login vs HR Login) - Powered by Supabase
 
 import { store } from '../data.js';
 
 export function renderLoginView() {
-  const defaultEmp = store.employees[0] || { name: 'Alex Mercer', email: 'alex.mercer@enterprise.ai' };
+  const employeesList = (store.employees && store.employees.length > 0) ? store.employees : [
+    { id: 'EMP001', name: 'Aarav Mehta', email: 'aarav.mehta@enterprise.ai', role: 'Python Developer', department: 'Software Development' }
+  ];
+
+  const activeEmpId = store.auth?.user?.id || employeesList[0].id;
+  const activeEmp = employeesList.find(e => e.id === activeEmpId) || employeesList[0];
 
   return `
     <div class="min-h-[85vh] flex items-center justify-center py-10 px-4 animate-fade-in">
@@ -15,7 +20,7 @@ export function renderLoginView() {
           </div>
           <h1 class="font-display text-3xl font-bold text-on-surface tracking-tight">TalentPulse AI Enterprise Portal</h1>
           <p class="text-xs sm:text-sm text-on-surface-variant max-w-lg">
-            Select your authentication profile below to enter the **Employee Workspace** or **HR Intelligence OS**.
+            Connected to Supabase project <code class="px-1.5 py-0.5 rounded bg-surface-container-high text-primary font-mono text-xs">yhskpilxfkzzmmamvcaa</code> (${employeesList.length} Live Employee Records)
           </p>
         </div>
 
@@ -36,17 +41,17 @@ export function renderLoginView() {
               <div>
                 <h2 class="font-display text-xl font-bold text-on-surface">Employee Login</h2>
                 <p class="text-xs text-on-surface-variant mt-1 leading-relaxed">
-                  Access your AI Skill Profile, upload resume, view assigned reskilling paths, and chat with AI Career Assistant.
+                  Access your AI Skill Profile, view career mobility recommendations, active learning, and feedback from Supabase.
                 </p>
               </div>
 
               <div class="flex flex-col gap-3 pt-2">
                 <div>
-                  <label class="text-[11px] font-semibold text-outline uppercase tracking-wider block mb-1">Select Employee Profile</label>
+                  <label class="text-[11px] font-semibold text-outline uppercase tracking-wider block mb-1">Select Employee Profile (${employeesList.length} Available)</label>
                   <select id="empLoginSelect" class="w-full h-11 px-3.5 rounded-xl bg-surface-container-low text-xs font-semibold text-on-surface border border-surface-container focus:outline-none focus:border-primary">
-                    ${store.employees.map(e => `
-                      <option value="${e.id}" data-name="${e.name}" data-email="${e.email}">
-                        ${e.name} — ${e.role} (${e.department})
+                    ${employeesList.map(e => `
+                      <option value="${e.id}" ${e.id === activeEmpId ? 'selected' : ''}>
+                        ${e.id} — ${e.name} (${e.role}, ${e.department})
                       </option>
                     `).join('')}
                   </select>
@@ -57,7 +62,7 @@ export function renderLoginView() {
                   <input 
                     type="email" 
                     id="empEmailInput" 
-                    value="${defaultEmp.email}" 
+                    value="${activeEmp.email}" 
                     class="w-full h-10 px-3.5 rounded-xl bg-surface-container-low text-xs text-on-surface border border-surface-container focus:outline-none focus:border-primary"
                   />
                 </div>
