@@ -262,10 +262,31 @@ export function logoutUser() {
 // Get active logged-in employee detailed object
 export function getActiveEmployee() {
   if (!store.employees || store.employees.length === 0) {
-    return defaultTransformedEmployees[0];
+    return defaultTransformedEmployees?.[0] || store.auth?.user;
   }
   const currentId = store.auth?.user?.id;
-  return store.employees.find(e => e.id === currentId) || store.employees[0];
+  return store.employees.find(e => e.id === currentId || e.Employee_ID === currentId) || store.employees[0];
+}
+
+/**
+ * Enroll active employee into a skill gap remediation course
+ */
+export function enrollEmployeeCourse(courseName, skillName) {
+  const emp = getActiveEmployee();
+  if (!emp) return null;
+  if (!emp.enrolledCourses) emp.enrolledCourses = [];
+  const existing = emp.enrolledCourses.find(c => c.title === courseName || c.skill === skillName);
+  if (existing) return existing;
+  const newCourse = {
+    id: 'ENROLL-' + Math.floor(1000 + Math.random() * 9000),
+    title: courseName,
+    skill: skillName,
+    enrolledAt: new Date().toISOString(),
+    status: 'In Progress'
+  };
+  emp.enrolledCourses.push(newCourse);
+  saveStore(store);
+  return newCourse;
 }
 
 // HR Actions: Add Job Role
@@ -560,10 +581,16 @@ export const employeeList = store.employees;
 export const openRoles = store.jobRoles;
 export const jobRequisitions = store.jobRoles;
 
-export const targetOpportunity = store.jobRoles[0] || {
-  id: 'ROLE-9421',
-  title: 'Staff AI Solutions Architect',
-  department: 'Enterprise AI Platforms'
+export const targetOpportunity = {
+  id: store.jobRoles?.[0]?.id || 'ROLE-9421',
+  title: store.jobRoles?.[0]?.title || 'Staff AI Solutions Architect',
+  department: store.jobRoles?.[0]?.department || 'Enterprise AI Platforms',
+  matchScore: 84,
+  growthGaps: [
+    { title: 'Kubernetes Cluster Orchestration', gap: '22%', estHours: '18 hours remediation' },
+    { title: 'Distributed Systems & Envoy', gap: '15%', estHours: '12 hours remediation' },
+    { title: 'SOC2 Compliance Architecture', gap: '30%', estHours: '25 hours remediation' }
+  ]
 };
 
 export const feedbackList = [

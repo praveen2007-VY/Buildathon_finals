@@ -6,7 +6,17 @@ import { showToast } from '../../components/modals.js';
 let selectedRoleId = null;
 
 export function renderEmpSkillGapView() {
-  const emp = getActiveEmployee() || store.employees[0];
+  const emp = (typeof getActiveEmployee === 'function' ? getActiveEmployee() : null) || store.employees?.[0] || {
+    id: 'EMP001',
+    name: 'Alex Mercer',
+    role: 'Principal Analyst',
+    department: 'People Analytics & Strategy',
+    location: 'San Francisco, CA',
+    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=256&q=80',
+    skills: ['Python', 'SQL (PostgreSQL/BigQuery)', 'RAG Architecture', 'Distributed Systems'],
+    proficiency: { 'Python': 96, 'SQL (PostgreSQL/BigQuery)': 94, 'RAG Architecture': 90 }
+  };
+
   const roles = store.jobRoles && store.jobRoles.length > 0 ? store.jobRoles : [
     {
       id: 'ROLE-9421',
@@ -53,14 +63,14 @@ export function renderEmpSkillGapView() {
   const targetRole = roles.find(r => r.id === selectedRoleId) || roles[0];
 
   // Calculate real skill match telemetry
-  const empTechSkills = (emp.skills || []).map(s => s.trim().toLowerCase());
-  const requiredSkills = targetRole.requiredSkills || ['Python', 'SQL', 'Git', 'System Architecture'];
+  const empTechSkills = (emp.skills || []).map(s => String(s).trim().toLowerCase());
+  const requiredSkills = targetRole.requiredSkills || targetRole.skills || ['Python', 'SQL', 'Git', 'System Architecture'];
 
   const acquired = [];
   const missing = [];
 
   requiredSkills.forEach(req => {
-    const reqLower = req.toLowerCase();
+    const reqLower = String(req).toLowerCase();
     const hasSkill = empTechSkills.some(s => s === reqLower || reqLower.includes(s) || s.includes(reqLower));
     if (hasSkill) {
       acquired.push({
@@ -101,13 +111,13 @@ export function renderEmpSkillGapView() {
       <!-- Active Employee Profile Summary & Target Role Selector -->
       <div class="bg-white p-6 rounded-2xl shadow-xs border border-surface-container flex flex-col md:flex-row items-center justify-between gap-6">
         <div class="flex items-center gap-4">
-          <img src="${emp.avatar}" class="w-14 h-14 rounded-2xl object-cover ring-2 ring-primary/20 shadow-xs"/>
+          <img src="${emp.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=256&q=80'}" class="w-14 h-14 rounded-2xl object-cover ring-2 ring-primary/20 shadow-xs"/>
           <div class="flex flex-col">
             <div class="flex items-center gap-2">
               <h2 class="font-display text-lg font-bold text-on-surface">${emp.name}</h2>
               <span class="px-2 py-0.5 rounded bg-primary-fixed text-on-primary-fixed text-[10px] font-bold">${emp.id}</span>
             </div>
-            <span class="text-xs text-on-surface-variant font-medium">${emp.role} • ${emp.department} (${emp.location})</span>
+            <span class="text-xs text-on-surface-variant font-medium">${emp.role} • ${emp.department} (${emp.location || 'HQ'})</span>
           </div>
         </div>
 
@@ -302,7 +312,7 @@ export function initEmpSkillGapEvents(onRoleChangeCallback) {
   const n8nBtn = document.getElementById('triggerN8nGapAnalysisBtn');
   if (n8nBtn) {
     n8nBtn.addEventListener('click', async () => {
-      const emp = getActiveEmployee();
+      const emp = (typeof getActiveEmployee === 'function' ? getActiveEmployee() : null) || store.employees?.[0];
       showToast('Dispatching Skill Gap payload to n8n AI Webhook...', 'info');
       try {
         const result = await triggerN8nWebhook({
@@ -319,4 +329,3 @@ export function initEmpSkillGapEvents(onRoleChangeCallback) {
     });
   }
 }
-
