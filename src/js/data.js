@@ -435,6 +435,54 @@ export function analyzeAndAssignEmployees(roleId, employeeIds = []) {
   return results;
 }
 
+/**
+ * Enroll active employee into a skill gap remediation course
+ */
+export function enrollEmployeeCourse(courseName, skillName, estHours) {
+  const emp = getActiveEmployee();
+  if (!emp) return null;
+
+  if (!emp.enrolledCourses) emp.enrolledCourses = [];
+  if (!emp.coursesLearning) emp.coursesLearning = [];
+
+  const existing = emp.enrolledCourses.find(c => c.title === courseName || c.skill === skillName);
+  if (existing) return existing;
+
+  const newCourse = {
+    id: 'ENROLL-' + Math.floor(1000 + Math.random() * 9000),
+    title: courseName,
+    skill: skillName,
+    provider: 'Enterprise Talent Academy',
+    estHours: estHours || '16 Learning Hours',
+    progress: 15,
+    status: 'In Progress',
+    enrolledDate: new Date().toLocaleDateString()
+  };
+
+  emp.enrolledCourses.unshift(newCourse);
+  
+  if (!emp.coursesLearning.includes(courseName)) {
+    emp.coursesLearning.push(courseName);
+  }
+
+  // Also update store.employees record
+  const storeEmp = store.employees.find(e => e.id === emp.id);
+  if (storeEmp) {
+    if (!storeEmp.enrolledCourses) storeEmp.enrolledCourses = [];
+    if (!storeEmp.enrolledCourses.some(c => c.title === courseName)) {
+      storeEmp.enrolledCourses.unshift(newCourse);
+    }
+    if (!storeEmp.coursesLearning) storeEmp.coursesLearning = [];
+    if (!storeEmp.coursesLearning.includes(courseName)) {
+      storeEmp.coursesLearning.push(courseName);
+    }
+  }
+
+  saveStore(store);
+  return newCourse;
+}
+
+
 // Resume Parsing Pipeline Simulator
 export function processResumePipeline(fileName, fileText) {
   const rawSkills = ['Python', 'SQL', 'Git', 'Data Pipelines', 'Cloud Security', 'Kubernetes'];

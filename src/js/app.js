@@ -16,7 +16,7 @@ import { renderEmpResumePipelineView, initResumePipelineEvents } from './views/e
 import { renderAiSkillProfileView } from './views/aiSkillProfile.js';
 import { renderEmpOpportunitiesView } from './views/employee/empOpportunities.js';
 import { renderEmpSkillGapView, initEmpSkillGapEvents } from './views/employee/empSkillGap.js';
-import { renderEmpLearningView } from './views/employee/empLearning.js';
+import { renderEmpLearningView, initEmpLearningEvents } from './views/employee/empLearning.js';
 import { renderAiCareerAssistantView, initAiCareerAssistantEvents } from './views/aiCareerAssistant.js';
 import { renderEmpFeedbackView } from './views/employee/empFeedback.js';
 import { renderEmpSettingsView } from './views/employee/empSettings.js';
@@ -546,6 +546,13 @@ class TalentPulseApp {
     // 7. Employee Skill Gap Analysis Events
     if (this.currentPath.includes('skill-gap')) {
       initEmpSkillGapEvents(() => {
+        this.render();
+      });
+    }
+
+    // 8. Employee Learning & Skill Acceleration Events
+    if (this.currentPath.includes('learning')) {
+      initEmpLearningEvents(() => {
         this.render();
       });
     }

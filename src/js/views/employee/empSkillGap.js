@@ -1,4 +1,5 @@
 // Employee Module: Skill Gap & Growth Analysis View - Data-Driven & Interactive
+
 import { getActiveEmployee, store, triggerN8nWebhook, enrollEmployeeCourse } from '../../data.js';
 import { showToast } from '../../components/modals.js';
 
@@ -296,9 +297,8 @@ export function initEmpSkillGapEvents(onRoleChangeCallback) {
       const course = btn.getAttribute('data-course');
       const skill = btn.getAttribute('data-skill');
       
-      if (typeof enrollEmployeeCourse === 'function') {
-        enrollEmployeeCourse(course, skill);
-      }
+      // Save course enrollment to active employee state
+      enrollEmployeeCourse(course, skill);
 
       btn.innerText = 'Enrolled ✓';
       btn.classList.remove('bg-primary');
