@@ -79,15 +79,26 @@ const defaultData = {
 
 // Load or Initialize Store
 function getStore() {
+  if (typeof localStorage === 'undefined') return defaultData;
   const saved = localStorage.getItem(STORAGE_KEY);
   if (saved) {
-    try { return JSON.parse(saved); } catch (e) { console.error('Failed to parse store', e); }
+    try { 
+      const parsed = JSON.parse(saved);
+      // Clean up legacy random IDs (e.g. EMP-7907, EMP-8842) so EMP001 is consistently used
+      if (parsed.auth?.user && (parsed.auth.user.id?.startsWith('EMP-') || parsed.auth.user.id !== 'EMP001')) {
+        parsed.auth.user.id = 'EMP001';
+        parsed.auth.user.name = 'Alex Mercer';
+      }
+      return parsed;
+    } catch (e) { console.error('Failed to parse store', e); }
   }
   return defaultData;
 }
 
 export function saveStore(data) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  if (typeof localStorage !== 'undefined') {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  }
 }
 
 export const store = getStore();
@@ -97,7 +108,7 @@ export function loginUser(role, name, email) {
   store.auth.isLoggedIn = true;
   store.auth.role = role;
   store.auth.user = {
-    id: role === 'employee' ? 'EMP-' + Math.floor(1000 + Math.random() * 9000) : 'HR-101',
+    id: role === 'employee' ? 'EMP001' : 'HR-101',
     name: name || (role === 'employee' ? 'Alex Mercer' : 'HR Administrator'),
     email: email || (role === 'employee' ? 'alex.mercer@enterprise.ai' : 'hr@enterprise.ai'),
     role: role === 'employee' ? 'Principal Analyst' : 'HR Director',

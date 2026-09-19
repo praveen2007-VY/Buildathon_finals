@@ -11,7 +11,7 @@ import { renderLoginView } from './views/loginView.js';
 // Employee Module Views
 import { renderOverviewView } from './views/overview.js';
 import { renderEmpProfileView } from './views/employee/empProfile.js';
-import { renderEmpResumePipelineView } from './views/employee/empResumePipelineView.js';
+import { renderEmpResumePipelineView, initResumePipelineEvents } from './views/employee/empResumePipelineView.js';
 import { renderAiSkillProfileView } from './views/aiSkillProfile.js';
 import { renderEmpOpportunitiesView } from './views/employee/empOpportunities.js';
 import { renderEmpSkillGapView } from './views/employee/empSkillGap.js';
@@ -23,7 +23,18 @@ import { renderEmpSettingsView } from './views/employee/empSettings.js';
 // HR / Admin Module Views
 import { renderHrDashboardView } from './views/hrDashboard.js';
 import { renderHrEmployeeManagementView } from './views/hr/hrEmployeeManagement.js';
-import { renderHrAnalyzeView, renderMultiAnalysisResultCards } from './views/hr/hrAnalyzeView.js';
+import { 
+  renderHrAnalyzeView, 
+  renderMultiAnalysisResultCards,
+  renderN8nAnalysisReport,
+  renderEmployeeChecklistItems
+} from './views/hr/hrAnalyzeView.js';
+import { 
+  fetchRawEmployeesFromSupabase, 
+  getCachedRawEmployees, 
+  buildHrAnalysisPayload, 
+  sendHrAnalysisToN8n 
+} from '../services/hrAnalysisService.js';
 import { renderHrRecruitmentView } from './views/hr/hrRecruitment.js';
 import { renderHrLearningDevelopmentView } from './views/hr/hrLearningDevelopment.js';
 import { renderHrPerformanceView } from './views/hr/hrPerformance.js';
@@ -51,6 +62,9 @@ class TalentPulseApp {
     // Render Modals into DOM
     this.modalContainer.innerHTML = renderSearchModal() + renderAiDrawerModal();
 
+    // Fetch live Supabase employees in background for HR views
+    this.loadSupabaseEmployees();
+
     // Initial render
     this.render();
 
@@ -64,11 +78,43 @@ class TalentPulseApp {
         this.currentModule = 'employee';
       }
       this.render();
+      if (this.currentPath === 'hr/analyze' || this.currentPath === 'hr/talent-management') {
+        this.loadSupabaseEmployees();
+      }
       window.scrollTo(0, 0);
     });
 
     // Global events
     this.setupGlobalEvents();
+  }
+
+  async loadSupabaseEmployees() {
+    try {
+      const emps = await fetchRawEmployeesFromSupabase();
+      if (emps && emps.length > 0) {
+        this.updateHrAnalyzePersonnel(emps);
+      }
+    } catch (e) {
+      console.error('Could not load Supabase raw employees:', e);
+    }
+  }
+
+  updateHrAnalyzePersonnel(emps) {
+    const container = document.getElementById('empChecklistContainer');
+    if (container) {
+      container.innerHTML = renderEmployeeChecklistItems(emps);
+    }
+    const title = document.getElementById('databasePersonnelTitle');
+    if (title) {
+      title.textContent = `Database Personnel (${emps.length})`;
+    }
+    const badge = document.getElementById('personnelConnectedBadge');
+    if (badge) {
+      badge.innerHTML = `
+        <span class="material-symbols-outlined text-sm">database</span> 
+        <span>${emps.length} Personnel Connected</span>
+      `;
+    }
   }
 
   render() {
@@ -189,13 +235,13 @@ class TalentPulseApp {
     if (loginEmpBtn) {
       loginEmpBtn.addEventListener('click', () => {
         const empSelect = document.getElementById('empLoginSelect');
-        const selectedId = empSelect?.value || 'EMP-8842';
+        const selectedId = empSelect?.value || 'EMP001';
         const selectedEmp = store.employees.find(e => e.id === selectedId) || store.employees[0];
         const email = document.getElementById('empEmailInput')?.value || selectedEmp?.email || 'alex.mercer@enterprise.ai';
 
         loginUser('employee', selectedEmp?.name || 'Alex Mercer', email);
         if (store.auth.user && selectedEmp) {
-          store.auth.user.id = selectedEmp.id;
+          store.auth.user.id = selectedEmp.id || 'EMP001';
           store.auth.user.role = selectedEmp.role;
           store.auth.user.department = selectedEmp.department;
         }
@@ -298,68 +344,148 @@ class TalentPulseApp {
       });
     }
 
-    // 3. HR Run Multi-Employee AI Skill Gap Analysis & Skill Assignment
+    // Target Job Post Selector change listener (syncs form fields)
+    const selectRoleEl = document.getElementById('selectRoleAnalysis');
+    if (selectRoleEl) {
+      selectRoleEl.addEventListener('change', () => {
+        const found = store.jobRoles.find(r => r.id === selectRoleEl.value);
+        if (found) {
+          const titleInput = document.getElementById('roleTitleInput');
+          const deptInput = document.getElementById('roleDeptInput');
+          const skillsInput = document.getElementById('roleSkillsInput');
+          const bandInput = document.getElementById('roleBandInput');
+          const compInput = document.getElementById('roleCompInput');
+
+          if (titleInput) titleInput.value = found.title || '';
+          if (deptInput) deptInput.value = found.department || '';
+          if (skillsInput) skillsInput.value = Array.isArray(found.skills) ? found.skills.join(', ') : (found.skills || '');
+          if (bandInput) bandInput.value = found.band || 'L6 (Staff)';
+          if (compInput) compInput.value = found.compensation || '$185k - $225k';
+        }
+      });
+    }
+
+    // 3. HR Run Multi-Employee AI Skill Gap Analysis & Skill Assignment with n8n
     const runAnalysisBtn = document.getElementById('runAnalysisBtn');
     if (runAnalysisBtn) {
-      runAnalysisBtn.addEventListener('click', () => {
+      runAnalysisBtn.addEventListener('click', async () => {
+        // Step 1: Read input values
+        let jobRoleTitle = document.getElementById('roleTitleInput')?.value?.trim();
+        let department = document.getElementById('roleDeptInput')?.value?.trim();
+        let requiredSkills = document.getElementById('roleSkillsInput')?.value?.trim();
+        const bandLevel = document.getElementById('roleBandInput')?.value?.trim() || 'L5';
+        const compensationRange = document.getElementById('roleCompInput')?.value?.trim() || '';
+
+        // If inputs were empty, fallback to currently selected target role in dropdown
         const roleId = document.getElementById('selectRoleAnalysis')?.value;
+        const targetRole = store.jobRoles.find(r => r.id === roleId);
+        if (!jobRoleTitle && targetRole) jobRoleTitle = targetRole.title;
+        if (!department && targetRole) department = targetRole.department;
+        if (!requiredSkills && targetRole) {
+          requiredSkills = Array.isArray(targetRole.skills) ? targetRole.skills.join(', ') : targetRole.skills;
+        }
+
+        // STEP 1 — VALIDATE INPUT
+        if (!jobRoleTitle) {
+          showToast('Job Role Title must not be empty.', 'warning');
+          return;
+        }
+        if (!department) {
+          showToast('Department must not be empty.', 'warning');
+          return;
+        }
+        if (!requiredSkills) {
+          showToast('Required Skills must not be empty.', 'warning');
+          return;
+        }
+
         const checkedCbs = document.querySelectorAll('.emp-select-checkbox:checked');
         const selectedEmpIds = Array.from(checkedCbs).map(cb => cb.value);
 
         if (selectedEmpIds.length === 0) {
-          showToast('Please select at least one employee to analyze.', 'warning');
+          showToast('At least one employee must be selected.', 'warning');
           return;
         }
 
-        const results = analyzeAndAssignEmployees(roleId, selectedEmpIds);
-        this.lastAnalysisResults = results;
+        // Retrieve the complete selected Supabase records
+        const cachedEmps = getCachedRawEmployees();
+        const selectedEmployees = selectedEmpIds.map(id => {
+          const found = cachedEmps.find(e => (e.Employee_ID === id || e.id === id));
+          return found || { Employee_ID: id };
+        });
 
-        const container = document.getElementById('analysisResultContainer');
-        if (container && results) {
-          container.innerHTML = renderMultiAnalysisResultCards(results);
-          showToast(`AI Analysis complete! Missing skills assigned & feedback sent to ${results.length} employees.`, 'success');
+        // STEP 2 — BUILD EXACT JSON PAYLOAD
+        const payload = buildHrAnalysisPayload({
+          jobRoleTitle,
+          department,
+          requiredSkills,
+          bandLevel,
+          compensationRange
+        }, selectedEmployees);
 
-          // Bind n8n trigger buttons for individual results
-          document.querySelectorAll('.trigger-n8n-item-btn').forEach(btn => {
-            btn.addEventListener('click', async () => {
-              try {
-                const payload = JSON.parse(btn.dataset.payload);
-                const res = await triggerN8nWebhook(payload);
-                showToast(`n8n Webhook Triggered! ${res.message || 'Payload posted.'}`, 'success');
-              } catch (err) {
-                console.error('Failed to trigger n8n', err);
-              }
-            });
-          });
+        // STEP 4 — LOADING STATE
+        const originalBtnHtml = runAnalysisBtn.innerHTML;
+        runAnalysisBtn.disabled = true;
+        runAnalysisBtn.innerHTML = `
+          <span class="material-symbols-outlined text-base animate-spin">sync</span>
+          <span>Analyzing Employees...</span>
+        `;
+
+        try {
+          // STEP 3 — POST TO N8N
+          const result = await sendHrAnalysisToN8n(payload);
+
+          const container = document.getElementById('analysisResultContainer');
+
+          if (result.success && result.report) {
+            // STEP 6 — DISPLAY FINAL REPORT
+            if (container) {
+              container.innerHTML = renderN8nAnalysisReport(result.report, payload.job);
+              container.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+            showToast(`AI Analysis complete! ${payload.selected_employee_count} employees evaluated by n8n.`, 'success');
+          } else if (result.empty || (result.error && result.error.includes('No analysis report'))) {
+            // STEP 7 — ERROR HANDLING: No report
+            showToast('No analysis report was returned from the AI workflow.', 'warning');
+            if (container) {
+              container.innerHTML = `
+                <div class="bg-white p-6 rounded-2xl border border-warning/30 bg-warning/5 flex items-start gap-3">
+                  <span class="material-symbols-outlined text-warning text-xl">info</span>
+                  <div class="flex flex-col text-xs text-on-surface">
+                    <span class="font-bold">No Analysis Report Returned</span>
+                    <p class="text-on-surface-variant mt-1">No analysis report was returned from the AI workflow. Please ensure your n8n workflow returns a report object.</p>
+                  </div>
+                </div>
+              `;
+            }
+          } else {
+            // STEP 7 — ERROR HANDLING: Request failure
+            showToast('AI analysis failed. Please try again.', 'error');
+            if (container) {
+              container.innerHTML = `
+                <div class="bg-white p-6 rounded-2xl border border-error/30 bg-error/5 flex items-start gap-3">
+                  <span class="material-symbols-outlined text-error text-xl">error</span>
+                  <div class="flex flex-col text-xs text-on-surface">
+                    <span class="font-bold">AI Analysis Failed</span>
+                    <p class="text-on-surface-variant mt-1">Could not complete AI analysis via n8n. Please check your n8n workflow and webhook status.</p>
+                  </div>
+                </div>
+              `;
+            }
+          }
+        } catch (err) {
+          console.error('Fatal error during HR analysis execution:', err);
+          showToast('AI analysis failed. Please try again.', 'error');
+        } finally {
+          runAnalysisBtn.disabled = false;
+          runAnalysisBtn.innerHTML = originalBtnHtml;
         }
       });
     }
 
-    // 4. Employee Resume Upload Pipeline
-    const dropzone = document.getElementById('pipelineDropzone') || document.getElementById('resumeDropzone');
-    const fileInput = document.getElementById('resumeFileInput');
-
-    if (dropzone) {
-      dropzone.addEventListener('click', () => {
-        if (fileInput) fileInput.click();
-        else {
-          // Simulate file upload
-          const result = processResumePipeline('Alex_Mercer_Resume_2024.pdf');
-          showToast('Resume Parsed & AI Skills Extracted! Employee profile updated.', 'success');
-          this.render();
-        }
-      });
-    }
-
-    if (fileInput) {
-      fileInput.addEventListener('change', (e) => {
-        const file = e.target.files[0];
-        if (file) {
-          const result = processResumePipeline(file.name);
-          showToast(`Resume "${file.name}" Parsed! Extracted ${result.extractedSkills.length} verified skills.`, 'success');
-          this.render();
-        }
-      });
+    // 4. Employee Resume Upload Pipeline (Supabase Storage & Database Sync)
+    if (this.currentPath.includes('resume')) {
+      initResumePipelineEvents();
     }
 
     // 5. AI Career Assistant Interactive Events
