@@ -16,7 +16,7 @@ import { renderAiSkillProfileView } from './views/aiSkillProfile.js';
 import { renderEmpOpportunitiesView } from './views/employee/empOpportunities.js';
 import { renderEmpSkillGapView } from './views/employee/empSkillGap.js';
 import { renderEmpLearningView } from './views/employee/empLearning.js';
-import { renderAiCareerAssistantView } from './views/aiCareerAssistant.js';
+import { renderAiCareerAssistantView, initAiCareerAssistantEvents } from './views/aiCareerAssistant.js';
 import { renderEmpFeedbackView } from './views/employee/empFeedback.js';
 import { renderEmpSettingsView } from './views/employee/empSettings.js';
 
@@ -360,6 +360,11 @@ class TalentPulseApp {
           this.render();
         }
       });
+    }
+
+    // 5. AI Career Assistant Interactive Events
+    if (this.currentPath.includes('ai-career-assistant')) {
+      initAiCareerAssistantEvents();
     }
   }
 }

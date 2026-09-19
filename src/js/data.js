@@ -9,7 +9,7 @@ const defaultData = {
     isLoggedIn: true,
     role: 'employee', // 'employee' | 'hr'
     user: {
-      id: 'EMP-8842',
+      id: 'EMP001',
       name: 'Alex Mercer',
       email: 'alex.mercer@enterprise.ai',
       role: 'Principal Analyst',
@@ -19,7 +19,7 @@ const defaultData = {
   n8nWebhookUrl: 'https://n8n.your-domain.com/webhook/talent-pulse-analyze',
   employees: [
     {
-      id: 'EMP-8842',
+      id: 'EMP001',
       name: 'Alex Mercer',
       email: 'alex.mercer@enterprise.ai',
       role: 'Principal Analyst',
@@ -322,7 +322,7 @@ export async function triggerN8nWebhook(payload) {
 
 // Export compatibility objects for sub-views
 export const activeUser = {
-  id: 'EMP-8842',
+  id: 'EMP001',
   name: 'Alex Mercer',
   email: 'alex.mercer@enterprise.ai',
   role: 'Principal Analyst',
