@@ -143,6 +143,51 @@ const defaultData = {
   },
   n8nWebhookUrl: 'https://n8n.your-domain.com/webhook/talent-pulse-analyze',
   employees: defaultTransformedEmployees,
+      name: 'Alex Mercer',
+      email: 'alex.mercer@enterprise.ai',
+      role: 'Principal Analyst',
+      department: 'People Analytics & Strategy'
+    }
+  },
+  n8nWebhookUrl: 'https://n8n.your-domain.com/webhook/talent-pulse-analyze',
+  employees: [
+    {
+      id: 'EMP001',
+      name: 'Alex Mercer',
+      email: 'alex.mercer@enterprise.ai',
+      role: 'Principal Analyst',
+      department: 'People Analytics & Strategy',
+      location: 'San Francisco, CA',
+      skills: ['Python', 'SQL (PostgreSQL/BigQuery)', 'People Analytics', 'RAG Architecture', 'Distributed Systems'],
+      proficiency: { 'Python': 96, 'SQL (PostgreSQL/BigQuery)': 94, 'People Analytics': 98, 'RAG Architecture': 90, 'Distributed Systems': 88 },
+      experience: '8+ yrs data architecture & ML telemetry',
+      resumeText: 'Alex Mercer - Principal Systems & Talent Analyst. Skilled in Python, SQL, LLM Orchestration, RAG, and Workforce Analytics.'
+    },
+    {
+      id: 'EMP-8819',
+      name: 'Sarah Johnson',
+      email: 'sarah.j@enterprise.ai',
+      role: 'Senior Product Analyst',
+      department: 'Finance Engineering',
+      location: 'New York (Hybrid)',
+      skills: ['Python', 'Tableau Architecture', 'Workforce Forecasting', 'Financial Modeling'],
+      proficiency: { 'Python': 92, 'Tableau Architecture': 95, 'Workforce Forecasting': 90, 'Financial Modeling': 94 },
+      experience: '5 yrs fintech & product telemetry',
+      resumeText: 'Sarah Johnson - Senior Product Analyst. Expert in Tableau, Python, Financial Modeling, and Analytics.'
+    },
+    {
+      id: 'EMP-4402',
+      name: 'Marcus Chen',
+      email: 'marcus.c@enterprise.ai',
+      role: 'Engineering Team Lead',
+      department: 'Platform Architecture',
+      location: 'San Francisco (HQ)',
+      skills: ['Kubernetes', 'Golang Microservices', 'Distributed Systems', 'Engineering Leadership'],
+      proficiency: { 'Kubernetes': 95, 'Golang Microservices': 92, 'Distributed Systems': 94, 'Engineering Leadership': 90 },
+      experience: '10 yrs cloud infrastructure & devops',
+      resumeText: 'Marcus Chen - Engineering Team Lead. Specialized in Kubernetes, Golang, Envoy, and Cloud Platforms.'
+    }
+  ],
   jobRoles: [
     {
       id: 'ROLE-9421',
@@ -504,6 +549,17 @@ export function getActiveUserProfile() {
     percentile: active.performanceScore >= 4.5 ? 'Top 5%' : (active.performanceScore >= 4.0 ? 'Top 10%' : 'Top 25%')
   };
 }
+// Export compatibility objects for sub-views
+export const activeUser = {
+  id: 'EMP001',
+  name: 'Alex Mercer',
+  email: 'alex.mercer@enterprise.ai',
+  role: 'Principal Analyst',
+  department: 'People Analytics & Strategy',
+  avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=256&q=80',
+  grade: 'L6',
+  location: 'San Francisco, CA'
+};
 
 export const activeUser = getActiveUserProfile();
 export const userProfile = activeUser;
