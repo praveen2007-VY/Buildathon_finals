@@ -11,11 +11,11 @@ import { renderLoginView } from './views/loginView.js';
 
 // Employee Module Views
 import { renderOverviewView } from './views/overview.js';
-import { renderEmpProfileView } from './views/employee/empProfile.js';
+import { renderEmpProfileView, initEmpProfileEvents } from './views/employee/empProfile.js';
 import { renderEmpResumePipelineView } from './views/employee/empResumePipelineView.js';
 import { renderAiSkillProfileView } from './views/aiSkillProfile.js';
 import { renderEmpOpportunitiesView } from './views/employee/empOpportunities.js';
-import { renderEmpSkillGapView } from './views/employee/empSkillGap.js';
+import { renderEmpSkillGapView, initEmpSkillGapEvents } from './views/employee/empSkillGap.js';
 import { renderEmpLearningView } from './views/employee/empLearning.js';
 import { renderAiCareerAssistantView, initAiCareerAssistantEvents } from './views/aiCareerAssistant.js';
 import { renderEmpFeedbackView } from './views/employee/empFeedback.js';
@@ -409,6 +409,20 @@ class TalentPulseApp {
     // 5. AI Career Assistant Interactive Events
     if (this.currentPath.includes('ai-career-assistant')) {
       initAiCareerAssistantEvents();
+    }
+
+    // 6. Employee Profile View Sub-Tabs & Switcher
+    if (this.currentPath.includes('profile')) {
+      initEmpProfileEvents(() => {
+        this.render();
+      });
+    }
+
+    // 7. Employee Skill Gap Analysis Events
+    if (this.currentPath.includes('skill-gap')) {
+      initEmpSkillGapEvents(() => {
+        this.render();
+      });
     }
   }
 }
