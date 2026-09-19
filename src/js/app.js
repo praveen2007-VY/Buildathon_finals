@@ -44,6 +44,8 @@ class TalentPulseApp {
     this.currentModule = store.auth?.role || (this.currentPath.startsWith('hr/') ? 'hr' : 'employee');
 
     this.currentAnalysis = null;
+    this.hrDeptFilter = 'all';
+    this.hrLocFilter = 'all';
 
     this.init();
   }
@@ -143,7 +145,7 @@ class TalentPulseApp {
       switch (this.currentPath) {
         case 'hr/dashboard':
         case 'hr-dashboard':
-          viewContent = renderHrDashboardView();
+          viewContent = renderHrDashboardView(this.hrDeptFilter, this.hrLocFilter);
           break;
         case 'hr/employee-management':
           viewContent = renderHrEmployeeManagementView();
@@ -174,7 +176,7 @@ class TalentPulseApp {
           viewContent = renderHrSettingsView();
           break;
         default:
-          viewContent = renderHrDashboardView();
+          viewContent = renderHrDashboardView(this.hrDeptFilter, this.hrLocFilter);
           break;
       }
     }
@@ -291,6 +293,26 @@ class TalentPulseApp {
   }
 
   bindViewEvents() {
+    // HR Dashboard Filter dropdowns
+    const hrDeptSelect = document.getElementById('hrDeptFilterSelect');
+    const hrLocSelect = document.getElementById('hrLocFilterSelect');
+
+    if (hrDeptSelect) {
+      hrDeptSelect.addEventListener('change', (e) => {
+        this.hrDeptFilter = e.target.value;
+        this.render();
+        showToast(`Filtered HR Dashboard by Department: ${this.hrDeptFilter}`, 'info');
+      });
+    }
+
+    if (hrLocSelect) {
+      hrLocSelect.addEventListener('change', (e) => {
+        this.hrLocFilter = e.target.value;
+        this.render();
+        showToast(`Filtered HR Dashboard by Location: ${this.hrLocFilter}`, 'info');
+      });
+    }
+
     // 1. HR Create Job Post Form
     const roleForm = document.getElementById('hrAddRoleForm');
     if (roleForm) {
