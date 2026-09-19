@@ -238,19 +238,87 @@ export function renderEmployeeChecklistItems(employees = []) {
 }
 
 /**
- * Render n8n Multi-Employee AI Analysis Report
+ * Convert markdown text (headers, bold, lists, steps) into beautiful styled HTML
+ */
+export function formatMarkdownToHtml(markdownText) {
+  if (!markdownText) return '';
+
+  let html = markdownText
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+
+  // Headings
+  html = html.replace(/^### (.*$)/gim, '<h4 class="font-display text-sm font-bold text-on-surface mt-4 mb-2 flex items-center gap-1.5 text-primary">$1</h4>');
+  html = html.replace(/^## (.*$)/gim, '<h3 class="font-display text-base font-bold text-on-surface mt-5 mb-2.5 flex items-center gap-2 border-b border-surface-container pb-2">$1</h3>');
+  html = html.replace(/^# (.*$)/gim, '<h2 class="font-display text-lg font-bold text-on-surface mt-1 mb-3 flex items-center gap-2 text-primary">$1</h2>');
+
+  // Bold
+  html = html.replace(/\*\*(.*?)\*\*/gim, '<strong class="font-bold text-on-surface">$1</strong>');
+  html = html.replace(/__(.*?)__/gim, '<strong class="font-bold text-on-surface">$1</strong>');
+
+  // Bullet items
+  html = html.replace(/^\* (.*$)/gim, '<li class="flex items-start gap-2 text-xs text-on-surface-variant my-1"><span class="material-symbols-outlined text-primary text-sm mt-0.5">check_circle</span><span class="leading-relaxed">$1</span></li>');
+  html = html.replace(/^- (.*$)/gim, '<li class="flex items-start gap-2 text-xs text-on-surface-variant my-1"><span class="material-symbols-outlined text-primary text-sm mt-0.5">arrow_right</span><span class="leading-relaxed">$1</span></li>');
+
+  // Numbered list items
+  html = html.replace(/^(\d+)\. (.*$)/gim, '<div class="p-3 my-2 rounded-xl bg-surface-container-low border border-surface-container flex items-start gap-2.5 text-xs text-on-surface"><span class="w-5 h-5 rounded-full bg-primary text-white text-[10px] font-bold flex items-center justify-center flex-shrink-0 mt-0.5">$1</span><div class="flex-1 leading-relaxed">$2</div></div>');
+
+  // Spacing & newlines
+  html = html.replace(/\n\n/g, '<div class="my-2.5"></div>');
+  html = html.replace(/\n/g, '<br/>');
+
+  return html;
+}
+
+/**
+ * Render n8n Multi-Employee AI Analysis Report (supports both structured JSON and Markdown text reports)
  */
 export function renderN8nAnalysisReport(report, jobInfo = {}) {
   if (!report) return '';
 
-  const jobTitle = report.job_role || jobInfo.job_role_title || 'Target Role';
-  const department = report.department || jobInfo.department || 'Engineering';
-  const employeeCount = report.employee_count || report.employees?.length || 0;
-  const overallSummary = report.overall_summary || 'Multi-employee AI analysis successfully executed.';
+  const jobTitle = jobInfo.job_role_title || report.job_role || 'Target Role';
+  const department = jobInfo.department || report.department || 'Engineering';
+  const employeeCount = jobInfo.selected_employee_count || report.employee_count || report.employees?.length || 1;
+  const overallSummary = report.overall_summary || report.text || 'Multi-employee AI analysis successfully executed.';
   const employees = report.employees || [];
   const finalRecs = Array.isArray(report.final_recommendations) 
     ? report.final_recommendations 
     : (report.final_recommendations ? [report.final_recommendations] : []);
+
+  // If report is raw Markdown text or has no structured employees array
+  if (report.isMarkdown || (report.text && employees.length === 0)) {
+    return `
+      <div class="flex flex-col gap-6 animate-fade-in" id="n8nAnalysisReportView">
+        <div class="bg-white p-6 rounded-2xl shadow-xs border border-surface-container flex flex-col gap-5">
+          <!-- Header -->
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-surface-container pb-4">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-xl bg-primary-fixed flex items-center justify-center text-primary shadow-xs">
+                <span class="material-symbols-outlined text-2xl">insights</span>
+              </div>
+              <div class="flex flex-col">
+                <div class="flex items-center gap-2">
+                  <h3 class="font-display text-base font-bold text-on-surface">AI Career & Talent Analysis Report</h3>
+                  <span class="px-2 py-0.5 rounded-full bg-primary/10 text-primary text-[10px] font-bold">n8n Engine</span>
+                </div>
+                <span class="text-xs text-outline">Target Role: <strong class="text-on-surface">${jobTitle}</strong> • ${department}</span>
+              </div>
+            </div>
+            <span class="px-3 py-1 rounded-full bg-secondary-fixed text-on-secondary-fixed text-xs font-bold self-start sm:self-auto flex items-center gap-1.5">
+              <span class="material-symbols-outlined text-sm">groups</span>
+              ${employeeCount} Personnel Evaluated
+            </span>
+          </div>
+
+          <!-- Formatted Markdown Report Content -->
+          <div class="p-6 rounded-2xl bg-surface-container-low/60 border border-surface-container text-xs text-on-surface leading-relaxed flex flex-col">
+            ${formatMarkdownToHtml(report.text || overallSummary)}
+          </div>
+        </div>
+      </div>
+    `;
+  }
 
   return `
     <div class="flex flex-col gap-6 animate-fade-in" id="n8nAnalysisReportView">
