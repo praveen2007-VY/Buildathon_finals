@@ -512,10 +512,16 @@ export const employeeList = store.employees;
 export const openRoles = store.jobRoles;
 export const jobRequisitions = store.jobRoles;
 
-export const targetOpportunity = store.jobRoles[0] || {
-  id: 'ROLE-9421',
-  title: 'Staff AI Solutions Architect',
-  department: 'Enterprise AI Platforms'
+export const targetOpportunity = {
+  id: store.jobRoles?.[0]?.id || 'ROLE-9421',
+  title: store.jobRoles?.[0]?.title || 'Staff AI Solutions Architect',
+  department: store.jobRoles?.[0]?.department || 'Enterprise AI Platforms',
+  matchScore: 84,
+  growthGaps: [
+    { title: 'Kubernetes Cluster Orchestration', gap: '22%', estHours: '18 hours remediation' },
+    { title: 'Distributed Systems & Envoy', gap: '15%', estHours: '12 hours remediation' },
+    { title: 'SOC2 Compliance Architecture', gap: '30%', estHours: '25 hours remediation' }
+  ]
 };
 
 export const feedbackList = [
