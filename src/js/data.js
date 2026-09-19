@@ -262,10 +262,31 @@ export function logoutUser() {
 // Get active logged-in employee detailed object
 export function getActiveEmployee() {
   if (!store.employees || store.employees.length === 0) {
-    return defaultTransformedEmployees[0];
+    return defaultTransformedEmployees?.[0] || store.auth?.user;
   }
   const currentId = store.auth?.user?.id;
-  return store.employees.find(e => e.id === currentId) || store.employees[0];
+  return store.employees.find(e => e.id === currentId || e.Employee_ID === currentId) || store.employees[0];
+}
+
+/**
+ * Enroll active employee into a skill gap remediation course
+ */
+export function enrollEmployeeCourse(courseName, skillName) {
+  const emp = getActiveEmployee();
+  if (!emp) return null;
+  if (!emp.enrolledCourses) emp.enrolledCourses = [];
+  const existing = emp.enrolledCourses.find(c => c.title === courseName || c.skill === skillName);
+  if (existing) return existing;
+  const newCourse = {
+    id: 'ENROLL-' + Math.floor(1000 + Math.random() * 9000),
+    title: courseName,
+    skill: skillName,
+    enrolledAt: new Date().toISOString(),
+    status: 'In Progress'
+  };
+  emp.enrolledCourses.push(newCourse);
+  saveStore(store);
+  return newCourse;
 }
 
 // HR Actions: Add Job Role

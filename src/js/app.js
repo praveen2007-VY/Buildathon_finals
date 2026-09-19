@@ -11,10 +11,8 @@ import { renderLoginView } from './views/loginView.js';
 
 // Employee Module Views
 import { renderOverviewView } from './views/overview.js';
-import { renderEmpProfileView } from './views/employee/empProfile.js';
-import { renderEmpResumePipelineView, initResumePipelineEvents } from './views/employee/empResumePipelineView.js';
 import { renderEmpProfileView, initEmpProfileEvents } from './views/employee/empProfile.js';
-import { renderEmpResumePipelineView } from './views/employee/empResumePipelineView.js';
+import { renderEmpResumePipelineView, initResumePipelineEvents } from './views/employee/empResumePipelineView.js';
 import { renderAiSkillProfileView } from './views/aiSkillProfile.js';
 import { renderEmpOpportunitiesView } from './views/employee/empOpportunities.js';
 import { renderEmpSkillGapView, initEmpSkillGapEvents } from './views/employee/empSkillGap.js';
