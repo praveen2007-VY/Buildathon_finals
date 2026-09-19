@@ -1,6 +1,7 @@
-// Master Router & Event Controller - Supporting Login, HR AI Gap Analysis, n8n Integration & Resume Pipeline
+// Master Router & Event Controller - Supporting Login, HR AI Gap Analysis, n8n Integration & Supabase Realtime
 
-import { store, loginUser, logoutUser, addJobRole, addEmployee, analyzeEmployeeGap, processResumePipeline, triggerN8nWebhook } from './data.js';
+import { store, loginUser, logoutUser, addJobRole, addEmployee, analyzeEmployeeGap, processResumePipeline, triggerN8nWebhook, loadSupabaseData } from './data.js';
+import { subscribeToEmployeeChanges } from './services/supabaseService.js';
 import { renderSidebar } from './components/sidebar.js';
 import { renderHeader } from './components/header.js';
 import { renderSearchModal, renderAiDrawerModal, showToast } from './components/modals.js';
@@ -47,12 +48,23 @@ class TalentPulseApp {
     this.init();
   }
 
-  init() {
+  async init() {
     // Render Modals into DOM
     this.modalContainer.innerHTML = renderSearchModal() + renderAiDrawerModal();
 
+    // Fetch initial dataset from Supabase
+    await loadSupabaseData();
+
     // Initial render
     this.render();
+
+    // Subscribe to real-time database changes from Supabase
+    subscribeToEmployeeChanges(async (payload) => {
+      console.log('Database change detected, refreshing dataset from Supabase...');
+      await loadSupabaseData();
+      this.render();
+      showToast('Live database record updated from Supabase', 'info');
+    });
 
     // Hash change listener
     window.addEventListener('hashchange', () => {
@@ -185,15 +197,26 @@ class TalentPulseApp {
   bindLoginEvents() {
     const loginEmpBtn = document.getElementById('loginAsEmployeeBtn');
     const loginHrBtn = document.getElementById('loginAsHrBtn');
+    const empSelect = document.getElementById('empLoginSelect');
+
+    if (empSelect) {
+      empSelect.addEventListener('change', () => {
+        const selectedId = empSelect.value;
+        const selectedEmp = store.employees.find(e => e.id === selectedId);
+        const emailInput = document.getElementById('empEmailInput');
+        if (selectedEmp && emailInput) {
+          emailInput.value = selectedEmp.email;
+        }
+      });
+    }
 
     if (loginEmpBtn) {
       loginEmpBtn.addEventListener('click', () => {
-        const empSelect = document.getElementById('empLoginSelect');
-        const selectedId = empSelect?.value || 'EMP-8842';
+        const selectedId = empSelect?.value || 'EMP001';
         const selectedEmp = store.employees.find(e => e.id === selectedId) || store.employees[0];
-        const email = document.getElementById('empEmailInput')?.value || selectedEmp?.email || 'alex.mercer@enterprise.ai';
+        const email = document.getElementById('empEmailInput')?.value || selectedEmp?.email;
 
-        loginUser('employee', selectedEmp?.name || 'Alex Mercer', email);
+        loginUser('employee', selectedEmp?.name, email);
         if (store.auth.user && selectedEmp) {
           store.auth.user.id = selectedEmp.id;
           store.auth.user.role = selectedEmp.role;
@@ -202,7 +225,7 @@ class TalentPulseApp {
 
         this.currentModule = 'employee';
         window.location.hash = '#/employee/dashboard';
-        showToast(`Logged in as Employee (${selectedEmp?.name})`, 'success');
+        showToast(`Logged in as Employee (${selectedEmp?.name}) from Supabase`, 'success');
       });
     }
 
@@ -343,8 +366,7 @@ class TalentPulseApp {
       dropzone.addEventListener('click', () => {
         if (fileInput) fileInput.click();
         else {
-          // Simulate file upload
-          const result = processResumePipeline('Alex_Mercer_Resume_2024.pdf');
+          const result = processResumePipeline('Employee_Resume.pdf');
           showToast('Resume Parsed & AI Skills Extracted! Employee profile updated.', 'success');
           this.render();
         }
@@ -368,4 +390,3 @@ class TalentPulseApp {
 document.addEventListener('DOMContentLoaded', () => {
   new TalentPulseApp();
 });
-
