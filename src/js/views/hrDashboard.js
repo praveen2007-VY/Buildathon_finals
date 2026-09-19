@@ -1,271 +1,373 @@
-// Screen 4: HR Intelligence Dashboard View matching Stitch specs
+// Screen 4: HR Intelligence Dashboard View - Powered by Supabase
 
-import { openRoles, candidateMarketplace } from '../data.js';
+import { getHrAnalyticsMetrics } from '../data.js';
 
-export function renderHrDashboardView() {
+export function renderHrDashboardView(deptFilter = 'all', locFilter = 'all') {
+  const metrics = getHrAnalyticsMetrics(deptFilter, locFilter);
+
   return `
     <div class="flex flex-col w-full gap-6 animate-fade-in">
       <!-- Executive Cockpit Header -->
       <div class="flex flex-col lg:flex-row lg:items-end justify-between gap-4 pb-2">
         <div class="flex flex-col gap-1">
-          <div class="flex items-center gap-2">
+          <div class="flex items-center gap-2 flex-wrap">
             <span class="text-xs uppercase tracking-wider text-primary font-semibold">Executive Cockpit</span>
             <span class="text-outline text-xs">/</span>
-            <span class="text-xs text-on-surface-variant font-medium">Q3 Workforce Cadence</span>
+            <span class="text-xs text-on-surface-variant font-medium">Supabase Dataset: yhskpilxfkzzmmamvcaa</span>
+            <span class="px-2.5 py-0.5 rounded-full bg-primary-fixed text-on-primary-fixed text-[10px] font-bold">
+              ${metrics.totalEmployees} Live Personnel Connected
+            </span>
           </div>
           <h1 class="font-display text-2xl font-bold text-on-surface tracking-tight">Enterprise Workforce & Talent Intelligence Dashboard</h1>
           <p class="text-xs text-on-surface-variant max-w-3xl">
-            Holistic organizational visibility into internal mobility, talent pipeline health, skill gap distribution, and retention risks across all dynamic business units.
+            Real-time organizational analytics powered by Supabase workforce records across ${metrics.departments.length} departments and ${metrics.locations.length} office hubs.
           </p>
         </div>
 
         <!-- Filter Controls -->
         <div class="flex flex-wrap items-center gap-3">
           <div class="flex items-center gap-2 bg-white px-3 py-2 rounded-lg shadow-xs border border-surface-container">
-            <span class="material-symbols-outlined text-outline text-base">calendar_today</span>
-            <select id="hrPeriodSelect" class="bg-transparent text-xs text-on-surface font-semibold focus:outline-none cursor-pointer">
-              <option value="90">Last 90 Days</option>
-              <option value="ytd">Year to Date (YTD)</option>
-              <option value="12m">Trailing 12 Months</option>
+            <span class="material-symbols-outlined text-outline text-base">domain</span>
+            <select id="hrDeptFilterSelect" class="bg-transparent text-xs text-on-surface font-semibold focus:outline-none cursor-pointer">
+              <option value="all" ${deptFilter === 'all' ? 'selected' : ''}>All Departments (${metrics.departments.length})</option>
+              ${metrics.departments.map(d => `
+                <option value="${d}" ${deptFilter === d ? 'selected' : ''}>${d}</option>
+              `).join('')}
             </select>
           </div>
 
           <div class="flex items-center gap-2 bg-white px-3 py-2 rounded-lg shadow-xs border border-surface-container">
-            <span class="material-symbols-outlined text-outline text-base">domain</span>
-            <select id="hrUnitSelect" class="bg-transparent text-xs text-on-surface font-semibold focus:outline-none cursor-pointer">
-              <option value="all">All Enterprise Units</option>
-              <option value="eng">Engineering & Platform</option>
-              <option value="ai">Data & AI</option>
+            <span class="material-symbols-outlined text-outline text-base">pin_drop</span>
+            <select id="hrLocFilterSelect" class="bg-transparent text-xs text-on-surface font-semibold focus:outline-none cursor-pointer">
+              <option value="all" ${locFilter === 'all' ? 'selected' : ''}>All Locations (${metrics.locations.length})</option>
+              ${metrics.locations.map(l => `
+                <option value="${l}" ${locFilter === l ? 'selected' : ''}>${l}</option>
+              `).join('')}
             </select>
           </div>
 
           <button id="downloadBoardPdfBtn" class="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-white text-xs font-semibold hover:bg-primary-container transition-all shadow-xs">
             <span class="material-symbols-outlined text-base">picture_as_pdf</span>
-            <span>Download Board Report (PDF)</span>
+            <span>Export HR Report</span>
           </button>
         </div>
       </div>
 
       <!-- Executive Stat Metrics Strip (4 Elevated Cards) -->
       <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-        <!-- Metric 1 -->
-        <div class="bg-white p-4 rounded-xl shadow-xs border border-surface-container flex flex-col justify-between">
+        <!-- Metric 1: Total Employees -->
+        <div class="bg-white p-5 rounded-2xl shadow-xs border border-surface-container flex flex-col justify-between">
           <div class="flex items-center justify-between">
-            <span class="text-[11px] uppercase tracking-wider text-outline font-semibold">Internal Mobility</span>
-            <span class="material-symbols-outlined text-primary-container text-xl">sync_alt</span>
+            <span class="text-[11px] uppercase tracking-wider text-outline font-semibold">Total Personnel</span>
+            <span class="material-symbols-outlined text-primary-container text-xl">groups</span>
           </div>
-          <div class="mt-2 flex items-baseline gap-2">
-            <span class="font-display text-3xl text-on-surface font-bold">34.2%</span>
+          <div class="mt-3 flex items-baseline gap-2">
+            <span class="font-display text-3xl text-on-surface font-bold">${metrics.totalEmployees}</span>
             <span class="text-xs text-primary font-semibold flex items-center">
-              <span class="material-symbols-outlined text-xs">trending_up</span>+6.8% YoY
+              <span class="material-symbols-outlined text-xs mr-0.5">check_circle</span>${metrics.activeEmployees} Active
             </span>
           </div>
           <div class="mt-2 text-xs text-on-surface-variant flex justify-between">
-            <span>Agency Savings</span>
-            <span class="font-bold text-primary">$2.4M</span>
+            <span>Workforce Status</span>
+            <span class="font-bold text-primary">100% Operational</span>
           </div>
           <div class="w-full bg-surface-container h-1.5 rounded-full mt-2 overflow-hidden">
-            <div class="bg-primary-container h-full rounded-full" style="width: 68%"></div>
+            <div class="bg-primary-container h-full rounded-full" style="width: 100%"></div>
           </div>
         </div>
 
-        <!-- Metric 2 -->
-        <div class="bg-white p-4 rounded-xl shadow-xs border border-surface-container flex flex-col justify-between">
+        <!-- Metric 2: New Joiners / Freshers -->
+        <div class="bg-white p-5 rounded-2xl shadow-xs border border-surface-container flex flex-col justify-between">
           <div class="flex items-center justify-between">
-            <span class="text-[11px] uppercase tracking-wider text-outline font-semibold">Skill Coverage</span>
-            <span class="material-symbols-outlined text-primary text-xl">verified_user</span>
+            <span class="text-[11px] uppercase tracking-wider text-outline font-semibold">New Joiners / Freshers</span>
+            <span class="material-symbols-outlined text-primary text-xl">person_add</span>
           </div>
-          <div class="mt-2 flex items-baseline gap-2">
-            <span class="font-display text-3xl text-on-surface font-bold">88.5%</span>
-            <span class="text-[10px] px-1.5 py-0.5 rounded bg-primary-fixed text-on-primary-fixed font-semibold">Resilient</span>
+          <div class="mt-3 flex items-baseline gap-2">
+            <span class="font-display text-3xl text-on-surface font-bold">${metrics.newJoiners}</span>
+            <span class="text-[10px] px-2 py-0.5 rounded bg-primary-fixed text-on-primary-fixed font-semibold">Entry Level</span>
           </div>
           <div class="mt-2 text-xs text-on-surface-variant flex justify-between">
-            <span>Tech & Core Product</span>
-            <span class="font-semibold text-on-surface">Target >85%</span>
+            <span>Freshers Share</span>
+            <span class="font-semibold text-on-surface">${Math.round((metrics.newJoiners / Math.max(metrics.totalEmployees, 1)) * 100)}% of Total</span>
           </div>
           <div class="w-full bg-surface-container h-1.5 rounded-full mt-2 overflow-hidden">
-            <div class="bg-primary h-full rounded-full" style="width: 88.5%"></div>
+            <div class="bg-primary h-full rounded-full" style="width: ${Math.round((metrics.newJoiners / Math.max(metrics.totalEmployees, 1)) * 100)}%"></div>
           </div>
         </div>
 
-        <!-- Metric 3 -->
-        <div class="bg-white p-4 rounded-xl shadow-xs border border-surface-container flex flex-col justify-between">
+        <!-- Metric 3: Senior Technical Leads -->
+        <div class="bg-white p-5 rounded-2xl shadow-xs border border-surface-container flex flex-col justify-between">
           <div class="flex items-center justify-between">
-            <span class="text-[11px] uppercase tracking-wider text-outline font-semibold">Open Requisitions</span>
-            <span class="material-symbols-outlined text-secondary text-xl">hub</span>
+            <span class="text-[11px] uppercase tracking-wider text-outline font-semibold">Senior & Staff Leads</span>
+            <span class="material-symbols-outlined text-secondary text-xl">workspace_premium</span>
           </div>
-          <div class="mt-2 flex items-baseline gap-2">
-            <span class="font-display text-3xl text-on-surface font-bold">64</span>
-            <span class="text-xs text-outline">Active</span>
+          <div class="mt-3 flex items-baseline gap-2">
+            <span class="font-display text-3xl text-on-surface font-bold">${metrics.seniorLeads}</span>
+            <span class="text-xs text-outline">5+ Yrs Exp</span>
           </div>
           <div class="mt-2 text-xs text-on-surface-variant flex justify-between">
-            <span>Matches (>85%)</span>
-            <span class="font-bold text-secondary">42 Roles</span>
+            <span>Leadership Ratio</span>
+            <span class="font-bold text-secondary">${Math.round((metrics.seniorLeads / Math.max(metrics.totalEmployees, 1)) * 100)}% Senior</span>
           </div>
           <div class="w-full bg-surface-container h-1.5 rounded-full mt-2 overflow-hidden">
-            <div class="bg-secondary h-full rounded-full" style="width: 65%"></div>
+            <div class="bg-secondary h-full rounded-full" style="width: ${Math.round((metrics.seniorLeads / Math.max(metrics.totalEmployees, 1)) * 100)}%"></div>
           </div>
         </div>
 
-        <!-- Metric 4 -->
-        <div class="bg-white p-4 rounded-xl shadow-xs border border-surface-container flex flex-col justify-between">
+        <!-- Metric 4: Average Org Performance -->
+        <div class="bg-white p-5 rounded-2xl shadow-xs border border-surface-container flex flex-col justify-between">
           <div class="flex items-center justify-between">
-            <span class="text-[11px] uppercase tracking-wider text-outline font-semibold">Avg Internal Fill Time</span>
-            <span class="material-symbols-outlined text-primary text-xl">bolt</span>
+            <span class="text-[11px] uppercase tracking-wider text-outline font-semibold">Avg Performance Rating</span>
+            <span class="material-symbols-outlined text-primary text-xl">star</span>
           </div>
-          <div class="mt-2 flex items-baseline gap-2">
-            <span class="font-display text-3xl text-on-surface font-bold">14</span>
-            <span class="text-sm font-semibold text-on-surface">Days</span>
+          <div class="mt-3 flex items-baseline gap-2">
+            <span class="font-display text-3xl text-on-surface font-bold">${metrics.avgPerf}</span>
+            <span class="text-sm font-semibold text-on-surface">/ 5.0</span>
           </div>
           <div class="mt-2 text-xs text-on-surface-variant flex justify-between">
-            <span>vs. External 48d</span>
-            <span class="font-bold text-primary">-70.8% Speed</span>
+            <span>Verified Telemetry</span>
+            <span class="font-bold text-primary">High Veracity</span>
           </div>
           <div class="w-full bg-surface-container h-1.5 rounded-full mt-2 overflow-hidden">
-            <div class="bg-primary-fixed-dim h-full rounded-full" style="width: 30%"></div>
+            <div class="bg-primary-fixed-dim h-full rounded-full" style="width: ${Math.round((parseFloat(metrics.avgPerf) / 5.0) * 100)}%"></div>
           </div>
         </div>
       </div>
 
-      <!-- Charts & Skill Gaps Section (2 Equal Columns) -->
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <!-- SVG Velocity Chart -->
-        <div class="bg-white p-6 rounded-2xl shadow-xs border border-surface-container flex flex-col justify-between">
-          <div class="flex items-center justify-between mb-4">
+      <!-- Department Distribution & Headcount Experience Grid -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        <!-- Department Distribution List (7 Cols) -->
+        <div class="lg:col-span-7 bg-white p-6 rounded-2xl shadow-xs border border-surface-container flex flex-col gap-4">
+          <div class="flex items-center justify-between border-b border-surface-container pb-3">
             <div>
-              <h2 class="font-display text-base font-bold text-on-surface">Internal Placement Velocity</h2>
-              <p class="text-xs text-on-surface-variant">Promotions vs lateral shifts over past 4 quarters</p>
+              <h2 class="font-display text-base font-bold text-on-surface">Department Workforce Distribution</h2>
+              <p class="text-xs text-on-surface-variant">Headcount distribution across database business units</p>
             </div>
-            <div class="flex items-center gap-3 text-xs">
-              <span class="flex items-center gap-1"><span class="w-3 h-3 rounded-full bg-primary inline-block"></span> Promotions</span>
-              <span class="flex items-center gap-1"><span class="w-3 h-3 rounded-full bg-secondary-fixed-dim inline-block"></span> Laterals</span>
-            </div>
+            <span class="text-xs font-bold text-primary">${Object.keys(metrics.deptDist).length} Units</span>
           </div>
 
-          <div class="w-full h-56 flex flex-col justify-end">
-            <svg class="w-full h-full" viewBox="0 0 540 200" preserveAspectRatio="none">
-              <line stroke="#E7E8E6" stroke-dasharray="3 3" x1="40" x2="520" y1="30" y2="30"/>
-              <line stroke="#E7E8E6" stroke-dasharray="3 3" x1="40" x2="520" y1="80" y2="80"/>
-              <line stroke="#E7E8E6" stroke-dasharray="3 3" x1="40" x2="520" y1="130" y2="130"/>
-              <line stroke="#E7E8E6" x1="40" x2="520" y1="180" y2="180"/>
-              
-              <g transform="translate(80,0)">
-                <rect class="fill-current text-primary" x="0" y="100" width="26" height="80" rx="3"/>
-                <rect class="fill-current text-secondary-fixed-dim" x="30" y="125" width="26" height="55" rx="3"/>
-                <text x="28" y="196" font-size="10" text-anchor="middle" class="fill-current text-outline font-medium">Q4 (Prev)</text>
-              </g>
-
-              <g transform="translate(190,0)">
-                <rect class="fill-current text-primary" x="0" y="82" width="26" height="98" rx="3"/>
-                <rect class="fill-current text-secondary-fixed-dim" x="30" y="110" width="26" height="70" rx="3"/>
-                <text x="28" y="196" font-size="10" text-anchor="middle" class="fill-current text-outline font-medium">Q1</text>
-              </g>
-
-              <g transform="translate(300,0)">
-                <rect class="fill-current text-primary" x="0" y="65" width="26" height="115" rx="3"/>
-                <rect class="fill-current text-secondary-fixed-dim" x="30" y="95" width="26" height="85" rx="3"/>
-                <text x="28" y="196" font-size="10" text-anchor="middle" class="fill-current text-outline font-medium">Q2</text>
-              </g>
-
-              <g transform="translate(410,0)">
-                <rect class="fill-current text-primary" x="0" y="42" width="26" height="138" rx="3"/>
-                <rect class="fill-current text-secondary-fixed-dim" x="30" y="70" width="26" height="110" rx="3"/>
-                <text x="28" y="196" font-size="10" text-anchor="middle" class="fill-current text-on-surface font-bold">Q3 (Active)</text>
-              </g>
-            </svg>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            ${Object.keys(metrics.deptDist).map(d => {
+              const count = metrics.deptDist[d];
+              const pct = Math.round((count / Math.max(metrics.totalEmployees, 1)) * 100);
+              return `
+                <div class="p-3.5 rounded-xl bg-surface-container-low border border-surface-container flex flex-col gap-1.5">
+                  <div class="flex items-center justify-between text-xs">
+                    <span class="font-bold text-on-surface leading-tight">${d}</span>
+                    <span class="font-display font-bold text-primary">${count} <span class="text-[10px] font-normal text-outline">(${pct}%)</span></span>
+                  </div>
+                  <div class="w-full bg-surface-container-high h-2 rounded-full overflow-hidden">
+                    <div class="bg-primary-container h-full rounded-full" style="width: ${Math.max(8, pct * 2.5)}%"></div>
+                  </div>
+                </div>
+              `;
+            }).join('')}
           </div>
         </div>
 
-        <!-- Skill Gap Distribution -->
-        <div class="bg-white p-6 rounded-2xl shadow-xs border border-surface-container flex flex-col justify-between">
-          <div class="flex items-center justify-between mb-4">
-            <h2 class="font-display text-base font-bold text-on-surface">Critical Skill Gap Distribution</h2>
-            <span class="text-xs text-outline">Target: 85% average</span>
+        <!-- Experience & Tenure Distribution (5 Cols) -->
+        <div class="lg:col-span-5 bg-white p-6 rounded-2xl shadow-xs border border-surface-container flex flex-col justify-between">
+          <div class="flex items-center justify-between mb-4 border-b border-surface-container pb-3">
+            <div>
+              <h2 class="font-display text-base font-bold text-on-surface">Experience Band Breakdown</h2>
+              <p class="text-xs text-on-surface-variant">Tenure distribution from freshers to staff leads</p>
+            </div>
           </div>
 
           <div class="flex flex-col gap-4">
-            <div>
-              <div class="flex justify-between items-center mb-1 text-xs">
-                <span class="font-semibold text-on-surface">AI & ML Engineering</span>
-                <span class="font-bold text-on-surface">78%</span>
-              </div>
-              <div class="w-full bg-surface-container h-2 rounded-full overflow-hidden">
-                <div class="bg-amber-500 h-full rounded-full" style="width: 78%"></div>
-              </div>
-            </div>
-
-            <div>
-              <div class="flex justify-between items-center mb-1 text-xs">
-                <span class="font-semibold text-on-surface">Cloud Security & DevSecOps</span>
-                <span class="font-bold text-on-surface">82%</span>
-              </div>
-              <div class="w-full bg-surface-container h-2 rounded-full overflow-hidden">
-                <div class="bg-primary h-full rounded-full" style="width: 82%"></div>
-              </div>
-            </div>
-
-            <div>
-              <div class="flex justify-between items-center mb-1 text-xs">
-                <span class="font-semibold text-on-surface">Data Platform & Distributed Systems</span>
-                <span class="font-bold text-on-surface">91%</span>
-              </div>
-              <div class="w-full bg-surface-container h-2 rounded-full overflow-hidden">
-                <div class="bg-primary-container h-full rounded-full" style="width: 91%"></div>
-              </div>
-            </div>
+            ${Object.keys(metrics.expBands).map(band => {
+              const count = metrics.expBands[band];
+              const pct = Math.round((count / Math.max(metrics.totalEmployees, 1)) * 100);
+              return `
+                <div>
+                  <div class="flex justify-between items-center mb-1 text-xs">
+                    <span class="font-semibold text-on-surface">${band}</span>
+                    <span class="font-bold text-on-surface">${count} Employees (${pct}%)</span>
+                  </div>
+                  <div class="w-full bg-surface-container h-2 rounded-full overflow-hidden">
+                    <div class="bg-secondary h-full rounded-full" style="width: ${Math.max(5, pct)}%"></div>
+                  </div>
+                </div>
+              `;
+            }).join('')}
           </div>
         </div>
       </div>
 
-      <!-- High Priority Roles Table -->
-      <div class="bg-white p-6 rounded-2xl shadow-xs border border-surface-container flex flex-col gap-4">
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-          <div>
-            <h2 class="font-display text-base font-bold text-on-surface">High-Priority Open Roles & Recommended Candidates</h2>
-            <p class="text-xs text-on-surface-variant">Live openings querying internal talent graphs</p>
+      <!-- Critical Skill Gap & HR Action Center Grid -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        <!-- Critical Skill Gap Analysis (7 Cols) -->
+        <div class="lg:col-span-7 bg-white p-6 rounded-2xl shadow-xs border border-surface-container flex flex-col justify-between">
+          <div class="flex items-center justify-between mb-4 border-b border-surface-container pb-3">
+            <div>
+              <h2 class="font-display text-base font-bold text-on-surface">Critical Skill Gap & Coverage Analysis</h2>
+              <p class="text-xs text-on-surface-variant">Real workforce skill availability vs target demand</p>
+            </div>
+            <span class="text-xs font-semibold text-primary">Database Telemetry</span>
           </div>
-          <button id="filterScoreBtn" class="px-3 py-1.5 rounded-lg bg-surface-container text-xs font-semibold hover:bg-surface-container-high transition-colors">
-            Filter by Match Score (>85%)
-          </button>
+
+          <div class="flex flex-col gap-4">
+            ${metrics.criticalGaps.map(g => `
+              <div>
+                <div class="flex justify-between items-center mb-1 text-xs">
+                  <span class="font-semibold text-on-surface flex items-center gap-1.5">
+                    <span class="w-2 h-2 rounded-full ${g.coverage < 25 ? 'bg-error' : (g.coverage < 50 ? 'bg-amber-500' : 'bg-primary')}"></span>
+                    ${g.skill}
+                  </span>
+                  <div class="flex items-center gap-2">
+                    <span class="px-2 py-0.5 rounded text-[10px] font-bold ${g.coverage < 25 ? 'bg-error/10 text-error' : (g.coverage < 50 ? 'bg-amber-100 text-amber-900' : 'bg-primary/10 text-primary')}">${g.status}</span>
+                    <span class="font-bold text-on-surface">${g.coverage}%</span>
+                  </div>
+                </div>
+                <div class="w-full bg-surface-container h-2 rounded-full overflow-hidden">
+                  <div class="${g.coverage < 25 ? 'bg-error' : (g.coverage < 50 ? 'bg-amber-500' : 'bg-primary-container')} h-full rounded-full" style="width: ${Math.max(5, g.coverage)}%"></div>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+
+        <!-- HR Action Center (5 Cols) -->
+        <div class="lg:col-span-5 bg-white p-6 rounded-2xl shadow-xs border border-surface-container flex flex-col justify-between">
+          <div class="flex items-center justify-between mb-4 border-b border-surface-container pb-3">
+            <div class="flex items-center gap-2">
+              <span class="material-symbols-outlined text-secondary text-xl">notifications_active</span>
+              <div>
+                <h2 class="font-display text-base font-bold text-on-surface">HR Action Center</h2>
+                <p class="text-xs text-on-surface-variant">Priority operational alerts requiring attention</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="flex flex-col gap-3">
+            ${metrics.hrActions.map(action => `
+              <div class="p-3.5 rounded-xl bg-surface-container-low border border-surface-container flex items-start gap-3">
+                <span class="material-symbols-outlined ${action.type === 'warning' ? 'text-amber-500' : (action.type === 'error' ? 'text-error' : 'text-primary')} text-lg mt-0.5">
+                  ${action.type === 'warning' ? 'warning' : (action.type === 'error' ? 'error' : 'info')}
+                </span>
+                <div class="flex flex-col flex-1">
+                  <span class="text-xs font-bold text-on-surface">${action.title}</span>
+                  <p class="text-[11px] text-on-surface-variant mt-0.5 leading-relaxed">${action.detail}</p>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      </div>
+
+      <!-- High Priority Roles Table (Strictly NO undefined values) -->
+      <div class="bg-white p-6 rounded-2xl shadow-xs border border-surface-container flex flex-col gap-4">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-surface-container pb-3">
+          <div>
+            <h2 class="font-display text-base font-bold text-on-surface">Active Job Requisitions & Recommended Top Candidates</h2>
+            <p class="text-xs text-on-surface-variant">Querying real database records and internal talent match scores</p>
+          </div>
+          <a href="#/hr/analyze" class="px-3.5 py-1.5 rounded-lg bg-primary text-white text-xs font-bold hover:bg-primary/90 transition-all flex items-center gap-1.5 self-start sm:self-auto">
+            <span class="material-symbols-outlined text-sm">add</span>
+            <span>Post Requisition</span>
+          </a>
         </div>
 
         <div class="overflow-x-auto">
           <table class="w-full text-left border-collapse">
             <thead>
               <tr class="text-outline text-[11px] uppercase tracking-wider bg-surface-container-low">
-                <th class="py-3 px-4 rounded-l-lg">Role & Department</th>
+                <th class="py-3 px-4 rounded-l-lg">Requisition ID & Title</th>
+                <th class="py-3 px-4">Department</th>
                 <th class="py-3 px-4">Hiring Manager</th>
                 <th class="py-3 px-4">Top Candidate</th>
                 <th class="py-3 px-4">Match Score</th>
+                <th class="py-3 px-4">Stage</th>
                 <th class="py-3 px-4 rounded-r-lg text-right">Action</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-surface-container">
-              ${openRoles.map(r => `
+              ${metrics.requisitions.map(r => `
                 <tr class="hover:bg-surface-container-low/50 transition-colors">
                   <td class="py-3.5 px-4">
                     <div class="flex flex-col">
-                      <span class="text-xs font-bold text-on-surface">${r.title}</span>
-                      <span class="text-[11px] text-outline">${r.dept}</span>
+                      <span class="text-xs font-bold text-on-surface">${r.title || 'N/A'}</span>
+                      <span class="text-[10px] text-outline">${r.id || 'N/A'} • Open Date: ${r.openDate || 'N/A'}</span>
                     </div>
                   </td>
                   <td class="py-3.5 px-4">
-                    <div class="flex items-center gap-2">
-                      <img src="${r.managerAvatar}" class="w-6 h-6 rounded-full object-cover"/>
-                      <span class="text-xs text-on-surface font-medium">${r.hiringManager}</span>
-                    </div>
+                    <span class="text-xs text-on-surface font-medium">${r.department || 'N/A'}</span>
                   </td>
                   <td class="py-3.5 px-4">
-                    <div class="flex items-center gap-2">
-                      <img src="${r.candidateAvatar}" class="w-6 h-6 rounded-full object-cover"/>
-                      <span class="text-xs text-on-surface font-semibold">${r.topCandidate}</span>
-                    </div>
+                    <span class="text-xs text-on-surface font-medium">${r.hiringManager || 'N/A'}</span>
                   </td>
                   <td class="py-3.5 px-4">
-                    <span class="px-2 py-0.5 rounded bg-primary-fixed text-on-primary-fixed text-[11px] font-bold">${r.matchScore}</span>
+                    <span class="text-xs text-on-surface font-bold text-primary">${r.topCandidate || 'N/A'}</span>
+                  </td>
+                  <td class="py-3.5 px-4">
+                    <span class="px-2 py-0.5 rounded bg-primary-fixed text-on-primary-fixed text-[11px] font-bold">${r.matchScore || 'N/A'}</span>
+                  </td>
+                  <td class="py-3.5 px-4">
+                    <span class="px-2 py-0.5 rounded bg-surface-container-high text-on-surface-variant text-[10px] font-semibold">${r.currentStage || 'N/A'}</span>
                   </td>
                   <td class="py-3.5 px-4 text-right">
-                    <a href="#/talent-discovery" class="text-xs text-primary font-semibold hover:underline">Route Candidate</a>
+                    <a href="#/hr/analyze" class="text-xs text-primary font-bold hover:underline">Run AI Match</a>
+                  </td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Employee Directory Summary Table (All 50 Database Personnel) -->
+      <div class="bg-white p-6 rounded-2xl shadow-xs border border-surface-container flex flex-col gap-4">
+        <div class="flex items-center justify-between border-b border-surface-container pb-3">
+          <div>
+            <h2 class="font-display text-base font-bold text-on-surface">Employee Directory Summary (${metrics.filteredEmployees.length} Records)</h2>
+            <p class="text-xs text-on-surface-variant">Live summary of personnel stored in Supabase dataset</p>
+          </div>
+          <span class="text-xs text-outline font-semibold">Page 1 of 1</span>
+        </div>
+
+        <div class="overflow-x-auto max-h-[420px]">
+          <table class="w-full text-left border-collapse">
+            <thead class="sticky top-0 bg-white shadow-xs z-10">
+              <tr class="text-outline text-[11px] uppercase tracking-wider bg-surface-container-low">
+                <th class="py-3 px-4 rounded-l-lg">ID & Name</th>
+                <th class="py-3 px-4">Role & Department</th>
+                <th class="py-3 px-4">Location</th>
+                <th class="py-3 px-4">Experience</th>
+                <th class="py-3 px-4">Performance</th>
+                <th class="py-3 px-4 rounded-r-lg">Technical Skills</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-surface-container">
+              ${metrics.filteredEmployees.map(e => `
+                <tr class="hover:bg-surface-container-low/50 transition-colors">
+                  <td class="py-3 px-4">
+                    <div class="flex items-center gap-2.5">
+                      <img src="${e.avatar}" class="w-7 h-7 rounded-full object-cover"/>
+                      <div class="flex flex-col">
+                        <span class="text-xs font-bold text-on-surface">${e.name || 'N/A'}</span>
+                        <span class="text-[10px] text-outline">${e.id || 'N/A'}</span>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="py-3 px-4">
+                    <div class="flex flex-col">
+                      <span class="text-xs font-semibold text-on-surface">${e.role || 'N/A'}</span>
+                      <span class="text-[10px] text-outline">${e.department || 'N/A'}</span>
+                    </div>
+                  </td>
+                  <td class="py-3 px-4 text-xs text-on-surface">${e.location || 'N/A'}</td>
+                  <td class="py-3 px-4 text-xs text-on-surface font-medium">${e.experience || 'N/A'}</td>
+                  <td class="py-3 px-4">
+                    <span class="px-2 py-0.5 rounded text-[11px] font-bold ${e.performanceScore >= 4.5 ? 'bg-primary-fixed text-on-primary-fixed' : 'bg-surface-container-high text-on-surface-variant'}">
+                      ${e.performanceScore || 'N/A'} / 5.0
+                    </span>
+                  </td>
+                  <td class="py-3 px-4">
+                    <div class="flex flex-wrap gap-1 max-w-[240px]">
+                      ${(e.skills || []).slice(0, 3).map(sk => `
+                        <span class="px-2 py-0.5 rounded bg-surface-container-low text-[10px] font-semibold text-on-surface-variant">${sk}</span>
+                      `).join('')}
+                    </div>
                   </td>
                 </tr>
               `).join('')}

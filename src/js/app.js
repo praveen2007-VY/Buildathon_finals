@@ -1,6 +1,7 @@
-// Master Router & Event Controller - Supporting Login, HR AI Gap Analysis, n8n Integration & Resume Pipeline
+// Master Router & Event Controller - Supporting Login, HR AI Gap Analysis, n8n Integration & Supabase Realtime
 
-import { store, loginUser, logoutUser, addJobRole, addEmployee, analyzeEmployeeGap, processResumePipeline, triggerN8nWebhook } from './data.js';
+import { store, loginUser, logoutUser, addJobRole, addEmployee, analyzeEmployeeGap, processResumePipeline, triggerN8nWebhook, loadSupabaseData } from './data.js';
+import { subscribeToEmployeeChanges } from './services/supabaseService.js';
 import { renderSidebar } from './components/sidebar.js';
 import { renderHeader } from './components/header.js';
 import { renderSearchModal, renderAiDrawerModal, showToast } from './components/modals.js';
@@ -12,9 +13,11 @@ import { renderLoginView } from './views/loginView.js';
 import { renderOverviewView } from './views/overview.js';
 import { renderEmpProfileView } from './views/employee/empProfile.js';
 import { renderEmpResumePipelineView, initResumePipelineEvents } from './views/employee/empResumePipelineView.js';
+import { renderEmpProfileView, initEmpProfileEvents } from './views/employee/empProfile.js';
+import { renderEmpResumePipelineView } from './views/employee/empResumePipelineView.js';
 import { renderAiSkillProfileView } from './views/aiSkillProfile.js';
 import { renderEmpOpportunitiesView } from './views/employee/empOpportunities.js';
-import { renderEmpSkillGapView } from './views/employee/empSkillGap.js';
+import { renderEmpSkillGapView, initEmpSkillGapEvents } from './views/employee/empSkillGap.js';
 import { renderEmpLearningView } from './views/employee/empLearning.js';
 import { renderAiCareerAssistantView, initAiCareerAssistantEvents } from './views/aiCareerAssistant.js';
 import { renderEmpFeedbackView } from './views/employee/empFeedback.js';
@@ -54,11 +57,13 @@ class TalentPulseApp {
     this.currentModule = store.auth?.role || (this.currentPath.startsWith('hr/') ? 'hr' : 'employee');
 
     this.currentAnalysis = null;
+    this.hrDeptFilter = 'all';
+    this.hrLocFilter = 'all';
 
     this.init();
   }
 
-  init() {
+  async init() {
     // Render Modals into DOM
     this.modalContainer.innerHTML = renderSearchModal() + renderAiDrawerModal();
 
@@ -67,6 +72,14 @@ class TalentPulseApp {
 
     // Initial render
     this.render();
+
+    // Subscribe to real-time database changes from Supabase
+    subscribeToEmployeeChanges(async (payload) => {
+      console.log('Database change detected, refreshing dataset from Supabase...');
+      await loadSupabaseData();
+      this.render();
+      showToast('Live database record updated from Supabase', 'info');
+    });
 
     // Hash change listener
     window.addEventListener('hashchange', () => {
@@ -177,7 +190,7 @@ class TalentPulseApp {
       switch (this.currentPath) {
         case 'hr/dashboard':
         case 'hr-dashboard':
-          viewContent = renderHrDashboardView();
+          viewContent = renderHrDashboardView(this.hrDeptFilter, this.hrLocFilter);
           break;
         case 'hr/employee-management':
           viewContent = renderHrEmployeeManagementView();
@@ -208,7 +221,7 @@ class TalentPulseApp {
           viewContent = renderHrSettingsView();
           break;
         default:
-          viewContent = renderHrDashboardView();
+          viewContent = renderHrDashboardView(this.hrDeptFilter, this.hrLocFilter);
           break;
       }
     }
@@ -231,15 +244,27 @@ class TalentPulseApp {
   bindLoginEvents() {
     const loginEmpBtn = document.getElementById('loginAsEmployeeBtn');
     const loginHrBtn = document.getElementById('loginAsHrBtn');
+    const empSelect = document.getElementById('empLoginSelect');
+
+    if (empSelect) {
+      empSelect.addEventListener('change', () => {
+        const selectedId = empSelect.value;
+        const selectedEmp = store.employees.find(e => e.id === selectedId);
+        const emailInput = document.getElementById('empEmailInput');
+        if (selectedEmp && emailInput) {
+          emailInput.value = selectedEmp.email;
+        }
+      });
+    }
 
     if (loginEmpBtn) {
       loginEmpBtn.addEventListener('click', () => {
         const empSelect = document.getElementById('empLoginSelect');
         const selectedId = empSelect?.value || 'EMP001';
         const selectedEmp = store.employees.find(e => e.id === selectedId) || store.employees[0];
-        const email = document.getElementById('empEmailInput')?.value || selectedEmp?.email || 'alex.mercer@enterprise.ai';
+        const email = document.getElementById('empEmailInput')?.value || selectedEmp?.email;
 
-        loginUser('employee', selectedEmp?.name || 'Alex Mercer', email);
+        loginUser('employee', selectedEmp?.name, email);
         if (store.auth.user && selectedEmp) {
           store.auth.user.id = selectedEmp.id || 'EMP001';
           store.auth.user.role = selectedEmp.role;
@@ -248,7 +273,7 @@ class TalentPulseApp {
 
         this.currentModule = 'employee';
         window.location.hash = '#/employee/dashboard';
-        showToast(`Logged in as Employee (${selectedEmp?.name})`, 'success');
+        showToast(`Logged in as Employee (${selectedEmp?.name}) from Supabase`, 'success');
       });
     }
 
@@ -314,6 +339,26 @@ class TalentPulseApp {
   }
 
   bindViewEvents() {
+    // HR Dashboard Filter dropdowns
+    const hrDeptSelect = document.getElementById('hrDeptFilterSelect');
+    const hrLocSelect = document.getElementById('hrLocFilterSelect');
+
+    if (hrDeptSelect) {
+      hrDeptSelect.addEventListener('change', (e) => {
+        this.hrDeptFilter = e.target.value;
+        this.render();
+        showToast(`Filtered HR Dashboard by Department: ${this.hrDeptFilter}`, 'info');
+      });
+    }
+
+    if (hrLocSelect) {
+      hrLocSelect.addEventListener('change', (e) => {
+        this.hrLocFilter = e.target.value;
+        this.render();
+        showToast(`Filtered HR Dashboard by Location: ${this.hrLocFilter}`, 'info');
+      });
+    }
+
     // 1. HR Create Job Post Form
     const roleForm = document.getElementById('hrAddRoleForm');
     if (roleForm) {
@@ -492,6 +537,20 @@ class TalentPulseApp {
     if (this.currentPath.includes('ai-career-assistant')) {
       initAiCareerAssistantEvents();
     }
+
+    // 6. Employee Profile View Sub-Tabs & Switcher
+    if (this.currentPath.includes('profile')) {
+      initEmpProfileEvents(() => {
+        this.render();
+      });
+    }
+
+    // 7. Employee Skill Gap Analysis Events
+    if (this.currentPath.includes('skill-gap')) {
+      initEmpSkillGapEvents(() => {
+        this.render();
+      });
+    }
   }
 }
 
@@ -499,4 +558,3 @@ class TalentPulseApp {
 document.addEventListener('DOMContentLoaded', () => {
   new TalentPulseApp();
 });
-
