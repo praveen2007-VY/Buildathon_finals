@@ -1,7 +1,12 @@
 // Role-Aware Navigation Sidebar Component (Employee Portal vs HR / Admin Portal)
 
 export function renderSidebar(currentPath, currentModule = 'employee') {
-  const isNavActive = (path) => currentPath === path;
+  const isNavActive = (path) => {
+    if (currentPath === path) return true;
+    const cleanCurrent = currentPath.replace('employee/', '').replace('hr/', '');
+    const cleanPath = path.replace('employee/', '').replace('hr/', '');
+    return cleanCurrent === cleanPath;
+  };
 
   const getItemClass = (path) => {
     if (isNavActive(path)) {
@@ -67,7 +72,7 @@ export function renderSidebar(currentPath, currentModule = 'employee') {
             </a>
 
             <a href="#/employee/ai-career-assistant" data-path="employee/ai-career-assistant" class="${getItemClass('employee/ai-career-assistant')}">
-              <span class="material-symbols-outlined text-lg text-indigo-400">auto_awesome</span>
+              <span class="material-symbols-outlined text-lg ${isNavActive('employee/ai-career-assistant') ? 'text-[#0E201A]' : 'text-indigo-400'}">auto_awesome</span>
               <span class="text-xs">AI Career Assistant</span>
             </a>
 
